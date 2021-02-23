@@ -1,0 +1,20 @@
+{
+    "name": "cartesiansystemplugin",
+    "version": "0.0.1",
+    "description": "A plugin for Phaser 3",
+    "main": "./dist/CartesianSystemPlugin.js",
+    "scripts": {
+        "test": "node ./dist/CartesianSystemPlugin.js",
+        "build": "webpack && copyover.sh"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/prolight14/CartesianSystemPlugin.git"
+    },
+    "author": "prolight14",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/prolight14/CartesianSystemPlugin/issues"
+    },
+    "homepage": "https://github.com/prolight14/CartesianSystemPlugin#readme"
+}
