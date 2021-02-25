@@ -19,7 +19,6 @@ return /******/ (() => { // webpackBootstrap
 
 var CartesianSystemPlugin = function (scene)
 {
-    // The Scene that owns this plugin
     this.scene = scene;
 
     this.systems = scene.sys;
@@ -40,22 +39,23 @@ CartesianSystemPlugin.prototype = {
     {
         var eventEmitter = this.systems.events;
 
-        eventEmitter.on('start', this.start, this);
-
-        eventEmitter.on('update', this.update, this);
-
         eventEmitter.on('shutdown', this.shutdown, this);
         eventEmitter.on('destroy', this.destroy, this);
     },
 
     initWorld: function(config)
     {
-        return new CartesianSystem.World(config).init();
-    },
+        this.world = (new CartesianSystem.World(config)).init();
+        this.followX = 0;
+        this.followY = 0;
 
-    start: function()
-    {
-        this.world = this.initWorld(this.scene.cspConfig);
+        var bounds = this.world.bounds;
+        this.scene.cameras.main.setBounds(
+            bounds.minX, 
+            bounds.minY, 
+            bounds.maxX - bounds.minX, 
+            bounds.maxY - bounds.minY
+        );
     },
 
     integrate: function()
@@ -66,20 +66,59 @@ CartesianSystemPlugin.prototype = {
         sys.displayList.removeAll();
         sys.updateList.removeAll();
 
-        world.utils.loopProcessList(function(object)
+        sys.updateList.update();
+
+        world.loopProcessList(function(object)
         {
             sys.displayList.add(object);
             sys.updateList.add(object);
         });
-
+// maybe the bug has something to do this with this?:
         sys.displayList.queueDepthSort();
     },
 
-    update: function()
+    setFollow: function(x, y)
     {
-
+        this.followX = x;
+        this.followY = y;
     },
 
+    updateWorld: function()
+    {
+        var world = this.world;
+
+        world.update(this.followX, this.followY);
+
+        world.updateProcessList();
+        this.integrate();
+        world.resetProcessList();
+    },
+
+    syncWithGrid: function()
+    {
+        var world = this.world;
+
+        world.gameObjectHandler.forEach(function(gameObjectArray)
+        {
+            gameObjectArray.forEach(function(gameObject)
+            {
+                // update      
+                gameObject.bodyConf.update = function()
+                {
+                    gameObject.bodyConf.updateBoundingBox();
+                    world.cameraGrid.removeReference(gameObject);
+                    world.cameraGrid.addReference(gameObject);
+                };
+    
+                // destroy
+                gameObject.bodyConf.destroy = function()
+                {
+                    world.cameraGrid.removeReference(gameObject);
+                };
+            });
+        });
+    },
+   
     shutdown: function()
     {
         this.world = undefined;
